@@ -1,5 +1,5 @@
 // 제철한입 서비스 워커: 앱 파일은 미리 저장하고, 글꼴은 처음 받을 때 저장해 오프라인에서도 열리게 한다
-const VERSION = "jecheol-v1";
+const VERSION = "jecheol-v2";
 const CORE = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png"];
 
 self.addEventListener("install", e => {

@@ -565,19 +565,29 @@ function render(){
   else { sh.hidden=true; sh.innerHTML=""; document.body.classList.remove("locked"); }
 }
 
+/* ---------- 뒤로가기 (안드로이드 뒤로 버튼·아이폰 밀어서 뒤로) ----------
+   화면이 바뀔 때마다 방문 기록을 남겨, 뒤로가기가 앱을 닫지 않고 이전 화면으로 돌아가게 한다 */
+const snap = ()=>({tab:state.tab, m:state.m, w:state.w, sheet:state.sheet});
+addEventListener("popstate", e=>{
+  if(!e.state) return;
+  Object.assign(state, e.state, {open:null});
+  render(); window.scrollTo(0,0);
+});
+
 document.addEventListener("click", async e=>{
   const t=e.target.closest("button"); if(!t) return;
   const ds=t.dataset;
-  if(ds.tab){ state.tab=ds.tab; window.scrollTo(0,0); }
+  let nav=false;  // true면 새 화면으로 이동 → 방문 기록 추가
+  if(ds.tab){ if(state.tab===ds.tab && !state.sheet) return; state.tab=ds.tab; state.sheet=null; nav=true; window.scrollTo(0,0); }
   else if(ds.w){ state.w=+ds.w; document.querySelector(".pick")?.scrollIntoView({behavior:"smooth",block:"center"}); }
   else if(ds.ing){ state.open = state.open===ds.ing?null:ds.ing; }
-  else if(ds.m){ state.m=+ds.m; state.w= state.m===curM?curW:0; state.open=null; state.tab="today"; window.scrollTo(0,0); }
-  else if(ds.go){ state.m=curM; state.w=curW; state.open=null; }
+  else if(ds.m){ state.m=+ds.m; state.w= state.m===curM?curW:0; state.open=null; state.tab="today"; nav=true; window.scrollTo(0,0); }
+  else if(ds.go){ state.m=curM; state.w=curW; state.open=null; nav=true; }
   else if(ds.fav){ const k=ds.fav; favs = favs.includes(k)?favs.filter(x=>x!==k):[...favs,k]; saveFavs(); }
   else if(ds.unfav){ favs=favs.filter(x=>x!==ds.unfav); saveFavs(); }
-  else if(ds.recipe){ [state.m,state.w]=ds.recipe.split("-").map(Number); state.sheet="recipe"; }
-  else if(ds.open){ state.sheet=ds.open; document.getElementById("sheet").scrollTop=0; }
-  else if("close" in ds){ state.sheet=null; }
+  else if(ds.recipe){ [state.m,state.w]=ds.recipe.split("-").map(Number); state.sheet="recipe"; nav=true; }
+  else if(ds.open){ state.sheet=ds.open; nav=true; document.getElementById("sheet").scrollTop=0; }
+  else if("close" in ds){ history.back(); return; }  // 앱의 [돌아가기]도 휴대폰 뒤로가기와 똑같이
   else if("install" in ds){ if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; } }
   else if("hideinstall" in ds){ hideInstall=true; try{ localStorage.setItem("jc-hide-install","1"); }catch(e){} }
   else if(ds.tpl){ state.reel.tpl=ds.tpl; document.querySelectorAll("[data-tpl]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tpl===ds.tpl)); refreshReel(); return; }
@@ -605,9 +615,11 @@ document.addEventListener("click", async e=>{
   }
   else return;
   render();
+  nav ? history.pushState(snap(),"") : history.replaceState(snap(),"");
 });
 matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", render);
 new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+history.replaceState(snap(),"");
 render();
 if("serviceWorker" in navigator) addEventListener("load", ()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
 </script>
