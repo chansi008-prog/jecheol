@@ -1,0 +1,16 @@
+{
+  "name": "제철한입",
+  "short_name": "제철한입",
+  "description": "매달 제철 재료와 이번 주에 먹을 음식을 알려주는 앱",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F2F3EC",
+  "theme_color": "#C2562B",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

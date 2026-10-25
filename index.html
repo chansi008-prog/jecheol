@@ -1,0 +1,615 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="매달 제철 재료와 이번 주에 먹을 음식을 알려주는 앱">
+<meta name="theme-color" content="#F2F3EC" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141815" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="제철한입">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>html{padding-top:env(safe-area-inset-top,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>제철한입</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hahmlet:wght@500;700;800&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ground:#F2F3EC; --surface:#FFFFFF; --ink:#1D2420; --muted:#5F6A62; --line:#DCE0D5;
+  --sea:#2F6F8F; --field:#5E8A3A; --fruit:#C2562B;
+  --acc:#C2562B; --acc-soft:#F6E3D6;
+  --display:"Hahmlet","Nanum Myeongjo",serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#141815; --surface:#1E2420; --ink:#E9ECE4; --muted:#9BA69C; --line:#2E3630;
+    --sea:#7DB6D3; --field:#9CC57A; --fruit:#EE9A72; --acc-soft:#2C2620;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#141815; --surface:#1E2420; --ink:#E9ECE4; --muted:#9BA69C; --line:#2E3630;
+  --sea:#7DB6D3; --field:#9CC57A; --fruit:#EE9A72; --acc-soft:#2C2620;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+body.locked{overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+button:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:8px}
+.app{max-width:480px;margin:0 auto;padding-inline:18px;padding-block:20px 104px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:500}
+
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.brand{font-family:var(--display);font-weight:800;font-size:17px}
+.brand b{color:var(--acc)}
+.today{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+.month-head{margin-top:22px;display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:end}
+.month-num{font-family:var(--display);font-weight:800;font-size:76px;line-height:.85;color:var(--acc);font-variant-numeric:tabular-nums}
+.month-num small{font-size:28px;margin-left:2px}
+.month-mood{font-family:var(--display);font-weight:500;font-size:18px;line-height:1.35;padding-bottom:4px}
+.back{grid-column:1/-1;justify-self:start;margin-top:8px;font-size:13px;color:var(--acc);font-weight:600}
+
+.terms{margin-top:18px;display:flex;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.term{flex:1;padding:10px 0;display:flex;flex-direction:column;gap:1px}
+.term + .term{border-left:1px solid var(--line);padding-left:14px}
+.term .n{font-family:var(--display);font-weight:700;font-size:16px}
+.term .d{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.term.passed .n{color:var(--muted)}
+.term.next .n::after{content:attr(data-dday);font-family:var(--body);font-size:11px;font-weight:600;color:var(--acc);margin-left:6px;letter-spacing:.02em}
+
+.pick{margin-top:22px;background:var(--surface);border-radius:20px;padding:22px 20px 18px;box-shadow:0 1px 0 var(--line),0 10px 30px -18px rgba(30,40,30,.35);position:relative;overflow:hidden}
+.pick::before{content:"";position:absolute;right:-48px;top:-48px;width:170px;height:170px;border-radius:50%;background:var(--acc-soft)}
+.pick > *{position:relative}
+.pick .eyebrow{color:var(--acc);font-weight:600}
+.pick h2{font-size:30px;font-weight:800;margin-top:6px;line-height:1.2;padding-right:44px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);margin-top:6px}
+.pick p{margin:14px 0 0;max-width:62ch}
+.tip{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);font-size:14px;color:var(--muted)}
+.tip strong{color:var(--ink);font-weight:600;margin-right:6px}
+.heart{position:absolute;top:18px;right:18px;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:1px solid var(--line);z-index:1}
+.heart svg{width:20px;height:20px;fill:none;stroke:var(--muted);stroke-width:1.8}
+.heart[aria-pressed="true"] svg{fill:var(--acc);stroke:var(--acc)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;border-radius:12px;padding:11px 10px;font-size:14px;font-weight:600}
+.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.btn.primary{background:var(--acc);color:#fff}
+.btn.ghost{border:1px solid var(--line);background:var(--surface)}
+
+section{margin-top:30px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;gap:10px}
+.sec-h h3{font-size:19px;font-weight:700}
+.sec-h span{font-size:12px;color:var(--muted)}
+
+.weeks{display:flex;flex-direction:column}
+.wk{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line);text-align:left;width:100%}
+.wk:first-child{border-top:1px solid var(--line)}
+.wk .w{font-size:12px;color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums}
+.wk .t{font-family:var(--display);font-weight:700;font-size:16px;line-height:1.3}
+.wk .s{display:block;font-family:var(--body);font-weight:400;font-size:12.5px;color:var(--muted);margin-top:2px}
+.custom{display:inline-block;font-family:var(--body);font-size:11px;font-weight:600;color:var(--acc);border:1px solid currentColor;border-radius:99px;padding:0 8px;line-height:19px;vertical-align:2px;margin-left:6px}
+.wk .now{font-size:11px;font-weight:600;color:#fff;background:var(--acc);border-radius:99px;padding:2px 9px}
+.wk.sel{background:var(--acc-soft);border-radius:10px;border-color:transparent}
+.wk.sel + .wk{border-top-color:transparent}
+
+.cats{display:flex;flex-direction:column;gap:18px}
+.cat-name{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-bottom:8px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 13px;font-size:14px}
+.chip[aria-expanded="true"]{border-color:var(--ink)}
+.note{margin-top:10px;font-size:13.5px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.note b{color:var(--ink)}
+
+/* regional */
+.regions{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.rg{display:grid;grid-template-columns:76px 1fr;gap:12px;padding:13px 16px;align-items:start}
+.rg + .rg{border-top:1px solid var(--line)}
+.rg .where{font-size:12px;font-weight:600;color:var(--acc);line-height:1.4;padding-top:3px}
+.rg .what{font-family:var(--display);font-weight:700;font-size:16px;line-height:1.35}
+.rg .why{display:block;font-family:var(--body);font-weight:400;font-size:13px;color:var(--muted);margin-top:2px}
+
+.cal{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.mcell{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:6px;min-height:118px}
+.mcell .mn{font-family:var(--display);font-weight:800;font-size:24px;line-height:1}
+.mcell .mi{font-size:12px;color:var(--muted);line-height:1.45}
+.mcell.cur{border-color:var(--ink);border-width:2px;padding:11px}
+.mcell .bar{height:4px;border-radius:2px;width:28px}
+@media (max-width:360px){.cal{grid-template-columns:repeat(2,1fr)}}
+
+.empty{margin-top:28px;color:var(--muted);text-align:center;padding:30px 10px;border:1px dashed var(--line);border-radius:16px}
+.fav{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+.fav .t{font-family:var(--display);font-weight:700;font-size:17px}
+.fav .s{font-size:12.5px;color:var(--muted)}
+.fav button{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:4px 10px}
+
+/* sheet (recipe / reels) */
+.sheet{position:fixed;inset:0;z-index:20;background:var(--ground);overflow-y:auto;overscroll-behavior:contain}
+.sheet-in{max-width:480px;margin:0 auto;padding-inline:18px;padding-block:calc(env(safe-area-inset-top,0px) + 12px) calc(env(safe-area-inset-bottom,0px) + 40px)}
+.sheet-bar{display:flex;justify-content:space-between;align-items:center;padding-block:6px 14px;position:sticky;top:0;background:var(--ground);z-index:2}
+.sheet-bar button{display:flex;align-items:center;gap:4px;font-size:14px;font-weight:600}
+.sheet-bar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.sheet-bar .ttl{font-size:13px;color:var(--muted)}
+
+.rc-head h2{font-size:32px;font-weight:800;line-height:1.2}
+.rc-head .eyebrow{color:var(--acc);font-weight:600}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);margin-top:16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.fact{padding:10px 0;display:flex;flex-direction:column}
+.fact + .fact{border-left:1px solid var(--line);padding-left:12px}
+.fact .k{font-size:11px;letter-spacing:.06em;color:var(--muted)}
+.fact .v{font-family:var(--display);font-weight:700;font-size:16px}
+.ingl{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.ingl li{padding:9px 0;border-bottom:1px dotted var(--line);font-size:14.5px}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s;display:flex;flex-direction:column;gap:14px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:30px 1fr;gap:10px;font-size:15px}
+.steps li::before{content:counter(s);font-family:var(--display);font-weight:800;font-size:15px;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--acc-soft);color:var(--acc)}
+.rc-tip{margin-top:22px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:14px}
+.rc-tip b{color:var(--acc)}
+
+.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px}
+.seg button{padding:8px 4px;border-radius:9px;font-size:13px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--ground);font-weight:600}
+.reel-wrap{margin:16px auto 0;width:min(100%,300px);aspect-ratio:9/16;border-radius:18px;overflow:hidden;box-shadow:0 18px 40px -20px rgba(0,0,0,.45);background:var(--line)}
+.reel-wrap img{display:block;width:100%;height:100%}
+.reel-note{margin-top:12px;font-size:13px;color:var(--muted);text-align:center}
+.swatches{display:flex;justify-content:center;gap:10px;margin-top:14px}
+.sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--surface);box-shadow:0 0 0 1px var(--line)}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+.caption{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.caption .k{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between}
+.caption pre{margin:0;white-space:pre-wrap;font-family:var(--body);font-size:13.5px;line-height:1.6}
+.caption button{font-size:12px;color:var(--acc);font-weight:600}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 90px);transform:translateX(-50%);background:var(--ink);color:var(--ground);padding:9px 16px;border-radius:99px;font-size:13px;z-index:40}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+.tabs-in{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr)}
+.tab{padding:10px 0 12px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:var(--muted)}
+.tab svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-selected="true"]{color:var(--ink);font-weight:600}
+.tab[aria-selected="true"] svg{stroke:var(--acc)}
+
+@media (prefers-reduced-motion:no-preference){
+  .pick{animation:rise .45s ease-out both}
+  @keyframes rise{from{transform:translateY(8px)}to{transform:none}}
+}
+.install{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:13.5px;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center}
+.install b{color:var(--acc)}
+.install button{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<div class="app" id="app"></div>
+<div class="sheet" id="sheet" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<nav class="tabs" aria-label="메뉴">
+  <div class="tabs-in" role="tablist">
+    <button class="tab" role="tab" id="tab-today" data-tab="today" aria-selected="true">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>이번 주</button>
+    <button class="tab" role="tab" id="tab-cal" data-tab="cal" aria-selected="false">
+      <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>열두 달</button>
+    <button class="tab" role="tab" id="tab-fav" data-tab="fav" aria-selected="false">
+      <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>찜한 음식</button>
+  </div>
+</nav>
+
+<script>
+const CAT = {sea:["바다","--sea"], field:["밭·산","--field"], fruit:["과일","--fruit"]};
+/* 월별 데이터
+   wk: [메뉴, 재료, 추천 이유, 한 줄 팁, [조리시간, 난이도, 재료(2인분), 순서[]]]
+   reg: [지역, 특산물, 설명] */
+const M = [
+ {mood:"한겨울 바다가 가장 살찐 달", c:["#2F6F8F","#7DB6D3"], terms:[["소한",1,5],["대한",1,20]],
+  ing:[["굴","sea","‘바다의 우유’. 찬물에서 알이 가장 통통해요"],["꼬막","sea","벌교 참꼬막이 쫄깃하게 차오르는 때"],["대구","sea","산란 전 살이 단단하고 이리가 고소해요"],["과메기","sea","해풍에 말린 청어·꽁치, 겨울 한정"],["시금치","field","눈 맞은 노지 섬초는 단맛이 진해요"],["우엉","field","뿌리채소의 향이 가장 짙은 계절"],["한라봉","fruit","새콤달콤, 껍질째 향이 좋아요"],["귤","fruit","노지 귤 출하 막바지"]],
+  reg:[["전남 보성 벌교","참꼬막","갯벌 꼬막의 대명사, 1월이 가장 쫄깃해요"],["경북 포항 구룡포","과메기","겨울 해풍에 얼었다 녹기를 반복하며 말려요"],["경남 거제 외포","대구","한겨울 대구 위판장이 가장 붐비는 곳"],["전남 신안 비금도","섬초","해풍 맞고 자란 납작 시금치, 단맛이 진해요"]],
+  wk:[["굴국밥","굴","새해 첫 주, 속을 데우는 한 그릇. 굴은 1월에 가장 크고 달아요.","굴은 마지막에 넣고 한소끔만 — 오래 끓이면 질겨져요.",["25분","쉬움","굴 200g, 밥 2공기, 무 100g, 부추 한 줌, 달걀 1개, 다진 마늘 1큰술, 국간장 1큰술, 멸치육수 800ml, 소금 약간",["굴은 옅은 소금물에 흔들어 씻고 물기를 빼요.","육수에 채 썬 무를 넣고 무가 투명해질 때까지 끓여요.","다진 마늘과 국간장으로 간하고 굴을 넣어 한소끔만 끓여요.","부추와 달걀물을 풀고 바로 불을 꺼요.","그릇에 밥을 담고 국을 부어 내요."]]],
+      ["꼬막비빔밥","꼬막","제철 참꼬막은 삶아만 둬도 짭조름한 단맛이 납니다.","한 방향으로 저으며 삶다가 입이 한두 개 벌어지면 바로 건지세요.",["30분 (+해감 1시간)","보통","꼬막 500g, 밥 2공기, 부추 반 줌, 간장 3큰술, 고춧가루 1큰술, 다진 마늘 1/2큰술, 참기름 1큰술, 깨 약간",["꼬막을 박박 문질러 씻고 어두운 곳에서 소금물에 1시간 해감해요.","끓는 물에 넣고 한 방향으로 저으며 3~4분 삶아요.","입이 벌어지기 시작하면 건져 살만 발라요.","간장·고춧가루·마늘·참기름으로 양념장을 만들어 꼬막을 버무려요.","송송 썬 부추와 함께 밥 위에 올리고 깨를 뿌려요."]]],
+      ["맑은 대구탕","대구","대한(大寒) 무렵, 가장 추울 때 먹는 시원한 국물.","무를 먼저 끓여 국물을 내고, 대구는 센 불에 넣어야 살이 안 부서져요.",["40분","보통","대구 1/2마리, 무 200g, 두부 1/2모, 미나리 한 줌, 쑥갓 약간, 대파 1/2대, 다진 마늘 1큰술, 국간장 1큰술, 다시마육수 1.2L, 소금 약간",["대구는 토막 내 소금을 살짝 뿌리고 10분 뒤 헹궈요.","육수에 나박 썬 무를 넣고 15분 끓여요.","센 불에서 대구와 마늘을 넣고 10분, 거품은 걷어내요.","두부와 대파를 넣고 국간장·소금으로 간해요.","미나리와 쑥갓을 얹고 불을 꺼요."]]],
+      ["과메기 쌈","과메기","쫀득한 과메기를 배추·김·쪽파에 싸서.","돌김과 초고추장, 마늘 한 쪽을 같이 올리면 비린 맛이 사라져요.",["15분","쉬움","과메기 10쪽, 배추 속잎 10장, 돌김 10장, 쪽파 한 줌, 마늘 5쪽, 청양고추 1개, 생미역 한 줌, 초고추장 4큰술",["과메기는 껍질을 벗기고 한입 크기로 썰어요.","쪽파는 5cm, 마늘과 고추는 얇게 편 썰어요.","배추나 김 위에 과메기·쪽파·마늘·고추를 올려요.","초고추장을 찍고 생미역을 곁들여 싸 먹어요."]]]]},
+ {mood:"늦겨울, 첫 봄나물이 고개를 드는 달", c:["#4E7A55","#9CC59F"], terms:[["입춘",2,4],["우수",2,19]],
+  ing:[["홍합","sea","겨울 끝까지 살이 꽉 차 있어요"],["삼치","sea","기름이 올라 구이로 최고"],["꼬막","sea","겨울 제철의 마지막 기회"],["봄동","field","납작 배추, 고소하고 아삭해요"],["냉이","field","늦겨울 냉이는 향이 가장 진해요"],["달래","field","알싸한 봄의 첫맛"],["딸기","fruit","한겨울 하우스 딸기가 가장 달아요"],["한라봉","fruit","2월 말로 갈수록 당도가 올라요"]],
+  reg:[["제주 서귀포","한라봉","1월 중순~3월 초가 제철인 만감류"],["충남 논산","딸기","하우스 딸기의 주산지, 지금이 가장 달아요"],["전남 진도","봄동","해풍 맞고 겨울을 난 봄동"],["경남 통영","굴","겨울 굴 시즌의 막바지"]],
+  wk:[["봄동겉절이","봄동","입춘 첫 주, 밥상에 봄을 먼저 들이는 반찬.","절이지 말고 바로 무쳐야 아삭해요. 참기름은 먹기 직전에.",["15분","쉬움","봄동 1포기, 고춧가루 2큰술, 액젓 1.5큰술, 매실청 1큰술, 다진 마늘 1/2큰술, 식초 1작은술, 참기름·깨 약간",["봄동 잎을 한 장씩 떼어 씻고 큰 잎은 반으로 잘라요.","물기를 바짝 털어요 — 물이 남으면 양념이 겉돌아요.","양념을 먼저 섞은 뒤 봄동을 넣고 살살 버무려요.","먹기 직전에 참기름과 깨를 둘러요."]]],
+      ["홍합탕","홍합","저렴하고 푸짐한 겨울 끝 국물.","수염은 꼭 떼고, 청양고추 하나면 국물이 깔끔해져요.",["25분","쉬움","홍합 1kg, 대파 1대, 청양고추 1개, 마늘 5쪽, 물 1L, 소금 약간",["홍합 수염을 떼고 껍데기끼리 비벼 씻어요.","냄비에 홍합·물·편 마늘을 넣고 끓여요.","끓어오르면 거품을 걷고 입이 벌어질 때까지 5분 더 끓여요.","대파와 청양고추를 넣고 소금으로 간해요."]]],
+      ["삼치구이","삼치","기름 오른 삼치는 소금만 뿌려 구워도 충분해요.","껍질 쪽부터 굽고 한 번만 뒤집으세요.",["20분","쉬움","삼치 1마리(손질된 것), 굵은 소금 약간, 밀가루 2큰술, 식용유, 레몬 1/4개",["삼치에 소금을 뿌려 20분 두고 키친타월로 물기를 닦아요.","밀가루를 얇게 묻혀요.","달군 팬에 기름을 두르고 중불에서 껍질 쪽부터 5분 구워요.","한 번 뒤집어 3~4분 더 굽고 레몬을 곁들여요."]]],
+      ["냉이된장국","냉이","우수(雨水) 지나 땅이 풀릴 때, 향 좋은 국 한 그릇.","뿌리째 깨끗이 씻어 넣어야 향이 살아요.",["20분","쉬움","냉이 한 줌, 두부 1/2모, 된장 2큰술, 다진 마늘 1/2큰술, 대파 약간, 멸치육수 1L",["냉이 뿌리의 흙을 칼등으로 긁어내고 여러 번 씻어요.","육수에 된장을 풀어 끓여요.","두부와 마늘을 넣고 5분 끓여요.","냉이와 대파를 넣고 2분만 더 끓여요."]]]]},
+ {mood:"들판과 바다가 동시에 깨어나는 달", c:["#6D9A3C","#A9D27A"], terms:[["경칩",3,5],["춘분",3,20]],
+  ing:[["주꾸미","sea","산란 전 알이 꽉 찬 봄 주꾸미"],["도다리","sea","‘봄 도다리, 가을 전어’"],["바지락","sea","봄에 살이 가장 오르는 조개"],["쑥","field","어린 쑥은 향이 부드러워요"],["달래","field","3월이 가장 연하고 향긋"],["냉이","field","꽃대 올라오기 전에 드세요"],["미나리","field","청도 한재 미나리 출하 시작"],["딸기","fruit","봄 딸기는 향이 좋아요"]],
+  reg:[["경북 청도 한재","미나리","골짜기 맑은 물로 키워 줄기가 굵고 향이 진해요"],["충남 서천","주꾸미","알 밴 봄 주꾸미로 유명한 서해 포구"],["경남 통영","도다리쑥국","통영 사람들이 봄을 여는 국"]],
+  wk:[["달래장 비빔밥","달래","경칩 무렵, 입맛 깨우는 간단한 한 그릇.","간장·고춧가루·참기름에 달래를 송송 — 김에 싸 먹어도 좋아요.",["10분","쉬움","달래 한 줌, 간장 4큰술, 고춧가루 1큰술, 설탕 1/2큰술, 참기름 1큰술, 깨 약간, 밥 2공기, 달걀 2개",["달래 알뿌리의 얇은 껍질을 벗기고 씻어요.","1cm 길이로 송송 썰어요.","간장·고춧가루·설탕·참기름·깨와 섞어 달래장을 만들어요.","밥에 달걀프라이를 올리고 달래장을 넣어 비벼요."]]],
+      ["주꾸미볶음","주꾸미","알 밴 봄 주꾸미는 지금이 아니면 못 먹어요.","데친 뒤 볶아야 물이 안 생기고 쫄깃해요.",["30분","보통","주꾸미 500g, 양파 1/2개, 양배추 한 줌, 대파 1대, 고추장 2큰술, 고춧가루 2큰술, 간장 1큰술, 설탕 1큰술, 다진 마늘 1큰술, 참기름 약간",["주꾸미를 밀가루로 주물러 씻고 먹물과 눈을 떼요.","끓는 물에 30초만 데쳐 건져요.","센 불에 채소를 먼저 볶다가 양념을 넣어요.","주꾸미를 넣고 1~2분 빠르게 볶은 뒤 참기름을 둘러요."]]],
+      ["도다리쑥국","도다리","남해안의 대표 봄 국. 춘분 즈음이 딱 좋아요.","쑥은 불 끄기 직전에 넣어야 향이 날아가지 않아요.",["30분","보통","도다리 1마리, 어린 쑥 한 줌, 무 100g, 된장 1/2큰술, 국간장 1큰술, 다진 마늘 1/2큰술, 대파 약간, 쌀뜨물 1L",["도다리는 비늘과 내장을 손질해 토막 내요.","쌀뜨물에 무와 된장을 조금 풀어 10분 끓여요.","도다리와 마늘을 넣고 10분 더 끓여요.","국간장으로 간하고 쑥과 대파를 넣자마자 불을 꺼요."]]],
+      ["미나리전","미나리","향긋한 미나리를 듬뿍, 얇게 부쳐서.","반죽은 묽게, 미나리는 길게 깔아야 바삭해요.",["20분","쉬움","미나리 한 줌, 부침가루 1컵, 찬물 1컵, 청양고추 1개, 오징어 약간(선택), 식용유",["미나리는 잎을 정리하고 10cm 길이로 잘라요.","부침가루와 찬물을 섞어 묽은 반죽을 만들어요.","팬에 기름을 넉넉히 두르고 미나리를 나란히 깐 뒤 반죽을 얇게 부어요.","가장자리가 노릇해지면 뒤집어 꾹 눌러 바삭하게 구워요."]]]]},
+ {mood:"새순과 꽃게가 함께 오는 달", c:["#8A9A2E","#C9D477"], terms:[["청명",4,5],["곡우",4,20]],
+  ing:[["꽃게","sea","알 가득한 봄 암꽃게"],["멍게","sea","4~5월 바다향이 절정"],["키조개","sea","관자가 두툼해지는 때"],["두릅","field","‘봄나물의 왕’, 짧게만 나와요"],["쑥","field","쑥떡·쑥버무리 하기 좋을 때"],["취나물","field","향 좋은 산나물의 시작"],["딸기","fruit","하우스 딸기 막바지"]],
+  reg:[["충남 태안","봄 꽃게","알이 꽉 찬 암꽃게가 가장 많이 나는 때"],["경남 통영","멍게","국내 멍게의 대부분이 나는 곳"],["전남 장흥","키조개","전국 생산량의 약 84%, 4~5월이 가장 맛있어요"],["강원 산간","두릅","산에서 나는 참두릅이 짧게 나와요"]],
+  wk:[["두릅숙회","두릅","청명 무렵 딱 2~3주만 나는 귀한 순.","끓는 소금물에 30초, 찬물에 헹궈 초고추장에.",["10분","쉬움","참두릅 200g, 소금 약간, 고추장 2큰술, 식초 1큰술, 설탕 1큰술",["밑동의 단단한 부분과 겉껍질을 정리해요.","끓는 소금물에 굵은 쪽부터 넣어 30초~1분 데쳐요.","찬물에 헹궈 물기를 꼭 짜요.","고추장·식초·설탕으로 초고추장을 만들어 곁들여요."]]],
+      ["멍게비빔밥","멍게","바다 향이 가장 진한 시기의 멍게.","잘게 썬 멍게에 김가루·참기름만 — 양념은 적게.",["15분","쉬움","멍게 4~5마리, 밥 2공기, 오이 1/3개, 새싹채소 한 줌, 김가루, 참기름 1큰술, 깨 약간",["멍게 꼭지를 자르고 반으로 갈라 내장을 빼요.","살을 흐르는 물에 씻어 잘게 썰어요.","밥 위에 채 썬 오이·새싹채소·멍게를 올려요.","김가루·참기름·깨를 뿌려요. 간이 부족하면 간장을 조금만."]]],
+      ["간장게장","꽃게","곡우 무렵 암꽃게는 알이 가득 차 있어요.","간장은 끓여서 식힌 뒤 붓고, 사흘 뒤 한 번 더 달여 부어요.",["5일 (숙성 포함)","어려움","암꽃게 2kg, 간장 500ml, 물 1L, 다시마 1장, 양파 1개, 마늘 10쪽, 생강 1톨, 건고추 2개, 설탕 3큰술",["꽃게를 솔로 문질러 씻고 다리 끝을 잘라 물기를 빼요.","간장·물·채소·설탕을 20분 끓인 뒤 완전히 식혀요.","통에 꽃게 등딱지를 아래로 담고 간장을 부어 냉장해요.","3일 뒤 간장만 따라 다시 끓여 식혀 붓고, 2일 더 두면 완성."]]],
+      ["쑥버무리","쑥","어린 쑥과 쌀가루로 만드는 봄 간식.","쑥에 쌀가루를 고루 묻혀 김 오른 찜기에 20분.",["40분","보통","어린 쑥 150g, 습식 쌀가루 2컵, 설탕 2큰술, 소금 한 꼬집",["쑥을 씻어 물기를 살짝만 남겨요.","쌀가루에 소금·설탕을 섞어 체에 한 번 내려요.","쑥에 쌀가루를 고루 묻혀요.","면보를 깐 찜기에 20분 찌고 5분 뜸 들여요."]]]]},
+ {mood:"봄의 끝, 여름 채소가 오는 달", c:["#4C8F6B","#8FD1AE"], terms:[["입하",5,5],["소만",5,21]],
+  ing:[["병어","sea","5~6월 살이 부드러운 때"],["갑오징어","sea","두툼하고 단맛 나는 봄 갑오징어"],["멍게","sea","봄 제철 막바지"],["죽순","field","5월에만 잠깐 나와요"],["마늘쫑","field","햇마늘 전에 나오는 꽃대"],["아스파라거스","field","국산 노지 출하 시기"],["참외","fruit","성주 참외가 맛이 들어요"]],
+  reg:[["경북 성주","참외","국내 참외의 대부분, 5월부터 단맛이 올라요"],["경남 거제","맹종죽순","굵고 연한 죽순이 5월 한 달 나와요"],["전남 신안","병어","지도·임자도 앞바다 병어가 제철"]],
+  wk:[["병어조림","병어","입하 첫 주, 살 부드러운 병어를 무와 함께.","감자를 깔고 조리면 양념이 배어 반찬이 하나 더 생겨요.",["35분","보통","병어 2마리, 무 200g, 감자 1개, 양파 1/2개, 대파 1대, 간장 4큰술, 고춧가루 2큰술, 설탕 1큰술, 다진 마늘 1큰술, 물 1.5컵",["병어를 손질하고 앞뒤로 칼집을 넣어요.","냄비에 무와 감자를 깔고 양념물을 부어 10분 끓여요.","병어를 올리고 양념을 끼얹으며 15분 졸여요.","양파·대파를 넣고 국물이 자작해질 때까지 졸여요."]]],
+      ["죽순들깨볶음","죽순","1년 중 5월에만 생죽순을 만날 수 있어요.","삶은 죽순은 찬물에 반나절 담가 아린 맛을 빼세요.",["25분 (+삶기)","보통","삶은 죽순 300g, 들깻가루 3큰술, 들기름 2큰술, 국간장 1큰술, 다진 마늘 1/2큰술, 물 1/2컵, 쪽파 약간",["생죽순은 쌀뜨물에 1시간 삶아 찬물에 담가 둬요.","결대로 얇게 썰어요.","들기름에 마늘과 죽순을 볶다가 국간장을 넣어요.","물과 들깻가루를 넣고 자작하게 졸인 뒤 쪽파를 뿌려요."]]],
+      ["마늘쫑볶음","마늘쫑","아삭하고 달큰한 계절 밑반찬.","건새우와 같이 볶으면 감칠맛이 확 살아요.",["15분","쉬움","마늘쫑 200g, 건새우 한 줌, 간장 2큰술, 맛술 1큰술, 올리고당 1큰술, 식용유, 깨 약간",["마늘쫑을 4cm 길이로 썰어요.","마른 팬에 건새우를 볶아 비린 맛을 날려요.","기름을 두르고 마늘쫑을 2분 볶아요.","간장·맛술·올리고당을 넣고 윤기 나게 볶아 깨를 뿌려요."]]],
+      ["갑오징어숙회","갑오징어","소만 즈음, 두툼한 갑오징어를 살짝 데쳐서.","칼집을 넣고 1분만 데쳐야 부드러워요.",["15분","쉬움","갑오징어 1마리, 맛술 2큰술, 초고추장 3큰술, 미나리 약간",["뼈와 내장을 빼고 껍질을 벗겨요.","안쪽에 격자로 칼집을 넣어요.","끓는 물에 맛술을 넣고 1분 데친 뒤 찬물에 식혀요.","한입 크기로 썰어 미나리와 초고추장에 곁들여요."]]]]},
+ {mood:"햇감자와 매실, 여름의 시작", c:["#3F8C86","#86CFC8"], terms:[["망종",6,6],["하지",6,21]],
+  ing:[["오징어","sea","금어기 끝나고 다시 나와요"],["전복","sea","겨울부터 맛이 들어 초여름까지 좋아요"],["감자","field","하지감자, 포슬포슬"],["오이","field","노지 오이가 아삭"],["초당옥수수","field","생으로 먹는 달콤한 옥수수"],["매실","fruit","청매·황매 담그는 철"],["블루베리","fruit","국산 블루베리 출하"]],
+  reg:[["전남 광양","매실","섬진강변 매실, 6월 초 청매 수확"],["제주 구좌","초당옥수수","생으로 먹어도 달아 ‘과일 옥수수’로 불려요"],["전남 완도","전복","국내 양식 전복의 대부분이 나는 곳"],["강원","햇감자","하지 무렵 캐는 포슬포슬한 감자"]],
+  wk:[["매실청 담그기","매실","망종 무렵, 1년 쓸 매실청을 담글 때.","꼭지를 이쑤시개로 빼고, 매실과 설탕은 1:1.",["30분 (+숙성 100일)","보통","청매실 1kg, 설탕 1kg, 유리병(3L)",["매실을 씻어 물기를 완전히 말려요.","이쑤시개로 꼭지를 하나씩 빼요.","병에 매실과 설탕을 켜켜이 담고 맨 위는 설탕으로 덮어요.","서늘한 곳에 두고 가끔 저어 주다가 100일 뒤 매실을 건져요."]]],
+      ["오징어볶음","오징어","금어기가 풀리고 첫 오징어가 나와요.","센 불에 짧게 — 오래 볶으면 물이 생기고 질겨져요.",["25분","보통","오징어 2마리, 양파 1개, 양배추 한 줌, 당근 1/3개, 대파 1대, 고추장 2큰술, 고춧가루 2큰술, 간장 1큰술, 설탕 1큰술, 다진 마늘 1큰술, 참기름",["오징어를 손질해 안쪽에 칼집을 넣고 썰어요.","양념장을 미리 섞어 둬요.","센 불에 대파로 기름을 낸 뒤 채소를 볶아요.","오징어와 양념을 넣고 2분 볶아 참기름을 둘러요."]]],
+      ["감자전","감자","하지(夏至) 햇감자는 전분이 많아 쫀득해요.","갈아서 물을 따라내고 가라앉은 전분만 다시 섞으세요.",["25분","쉬움","감자 3개, 양파 1/4개(선택), 청양고추 1개, 소금 약간, 식용유",["감자와 양파를 강판에 갈아요.","체에 받쳐 물을 받고 10분 가라앉혀요.","윗물만 버리고 가라앉은 전분을 건더기와 섞어 소금 간해요.","기름을 넉넉히 두르고 얇게 펴서 앞뒤 노릇하게 부쳐요."]]],
+      ["오이냉국","오이","더워지기 시작할 때 시원한 한 그릇.","식초는 넉넉히, 얼음은 먹기 직전에.",["10분 (+냉장 30분)","쉬움","오이 1개, 불린 미역 한 줌, 찬물 3컵, 국간장 1큰술, 식초 3큰술, 설탕 1큰술, 다진 마늘 약간, 소금·깨·얼음",["오이는 채 썰고 미역은 살짝 데쳐 먹기 좋게 썰어요.","찬물에 국간장·식초·설탕·마늘·소금을 섞어요.","오이와 미역을 넣고 냉장고에 30분 둬요.","얼음과 깨를 띄워 내요."]]]]},
+ {mood:"복날, 몸을 보하는 달", c:["#2E7F9E","#7CC3DE"], terms:[["소서",7,7],["대서",7,23]],
+  ing:[["민어","sea","‘복더위엔 민어’, 여름 귀한 생선"],["장어","sea","여름 보양의 대표"],["전복","sea","복날 삼계탕에 함께 넣는 보양 재료"],["옥수수","field","찰옥수수 출하"],["가지","field","여름 가지는 부드럽고 달아요"],["토마토","field","노지 완숙 토마토"],["수박","fruit","가장 달 때"],["복숭아","fruit","천도·백도 시작"]],
+  reg:[["전남 신안 임자도","민어","여름 민어 파시가 열리던 곳"],["전북 고창","풍천장어","선운사 앞 강과 바다가 만나는 곳의 장어"],["강원 홍천","찰옥수수","7월 말부터 쫀득한 찰옥수수"],["경북 고령","수박","7월 중하순 노지 수박이 본격 출하돼요"]],
+  wk:[["콩국수","콩","소서 첫 주, 더위가 시작될 때 고소한 한 그릇.","콩은 6시간 불려 10분만 삶아야 비린내가 안 나요.",["40분 (+불림 6시간)","보통","백태 1컵, 물 3컵, 잣 1큰술, 깨 1큰술, 소면 2인분, 오이 1/2개, 소금 약간",["콩을 6시간 이상 불려요.","10분 삶아 찬물에 헹구며 껍질을 벗겨요.","콩·잣·깨·물을 곱게 갈아 냉장고에 둬요.","소면을 삶아 헹구고 콩물을 부어요. 소금은 각자 입맛대로."]]],
+      ["삼계탕","닭·전복","초복 무렵, 여름 보양의 기본.","전복 두 마리 넣으면 국물이 훨씬 깊어져요.",["1시간 30분","보통","영계 1마리, 찹쌀 1/2컵, 수삼 1뿌리, 대추 3알, 마늘 6쪽, 전복 2마리, 대파 약간, 소금·후추",["찹쌀을 1시간 불려요.","닭 속에 찹쌀·마늘·대추·수삼을 넣고 다리를 꼬아 고정해요.","물을 잠기게 붓고 1시간 끓여요.","손질한 전복을 넣고 10분 더 끓인 뒤 소금·후추로 간해요."]]],
+      ["가지구이","가지","여름 가지는 기름만 둘러 구워도 달아요.","소금 뿌려 10분 두고 물기를 닦으면 기름을 덜 먹어요.",["20분","쉬움","가지 2개, 소금 약간, 올리브유, 간장 2큰술, 식초 1큰술, 설탕 1/2큰술, 다진 마늘 약간, 쪽파",["가지를 1cm 두께로 길게 썰어 소금을 뿌리고 10분 둬요.","배어 나온 물기를 닦아요.","기름을 두르고 앞뒤를 노릇하게 구워요.","간장·식초·설탕·마늘 소스를 끼얹고 쪽파를 뿌려요."]]],
+      ["민어탕","민어","대서(大暑), 가장 더울 때 먹는 귀한 탕.","민어 부레와 껍질도 버리지 말고 같이 넣으세요.",["50분","보통","민어 토막·서더리 800g, 무 200g, 애호박 1/3개, 두부 1/2모, 고추장 1큰술, 고춧가루 2큰술, 국간장 1큰술, 다진 마늘 1큰술, 쑥갓·대파",["민어 토막과 부레·껍질을 깨끗이 씻어요.","물에 무를 넣고 끓으면 고추장·고춧가루를 풀어요.","민어를 넣고 15분 끓이며 거품을 걷어요.","호박·두부·마늘을 넣고 국간장으로 간해요.","대파와 쑥갓을 올려 내요."]]]]},
+ {mood:"한여름 과일이 가장 단 달", c:["#B2603A","#EBA27E"], terms:[["입추",8,7],["처서",8,23]],
+  ing:[["갈치","sea","여름 끝 은갈치가 살이 올라요"],["전어","sea","말부터 가을 전어 시작"],["옥수수","field","여름 옥수수 절정"],["애호박","field","노지 애호박이 달아요"],["호박잎","field","여름에만 먹는 쌈"],["복숭아","fruit","백도·황도 절정"],["포도","fruit","캠벨 출하 시작"]],
+  reg:[["제주","은갈치","한 마리씩 낚아 올려 은빛이 살아 있어요"],["경기 이천 장호원","복숭아","8월 백도·황도가 절정"],["충북 영동","포도","포도 축제가 열리는 고장"]],
+  wk:[["호박잎쌈","호박잎","한여름에만 나는 부드러운 쌈.","껍질 줄기를 벗겨 쪄야 까슬하지 않아요. 강된장과 함께.",["20분","쉬움","호박잎 20장, 된장 2큰술, 고추장 1큰술, 다진 소고기 50g(선택), 양파 1/4개, 애호박 약간, 청양고추 1개, 멸치육수 1/2컵",["호박잎 줄기 끝을 꺾어 겉의 실 같은 껍질을 벗겨요.","김 오른 찜기에 3~4분 쪄요.","소고기와 채소를 볶다가 된장·고추장·육수를 넣고 졸여 강된장을 만들어요.","호박잎에 밥과 강된장을 올려 싸 먹어요."]]],
+      ["갈치조림","갈치","입추 지나 은갈치가 통통해지는 시기.","무를 두껍게 깔고, 갈치는 나중에 올려 졸이세요.",["35분","보통","갈치 1마리, 무 300g, 감자 1개, 양파 1/2개, 청양고추 1개, 대파 1대, 간장 3큰술, 고춧가루 3큰술, 설탕 1큰술, 다진 마늘 1큰술, 생강 약간, 물 2컵",["갈치 지느러미를 가위로 정리하고 토막 내요.","무를 두껍게 썰어 깔고 물과 양념 절반을 넣어 10분 끓여요.","갈치와 감자를 올리고 남은 양념을 얹어요.","중약불에서 국물을 끼얹으며 15분 졸여요."]]],
+      ["복숭아 화채","복숭아","더위 막바지, 가장 단 복숭아로 시원하게.","오미자 우린 물에 띄우면 색도 맛도 좋아요.",["15분 (+우림 하룻밤)","쉬움","백도 1~2개, 건오미자 1/3컵, 찬물 3컵, 꿀 3큰술, 얼음, 민트(선택)",["오미자를 찬물에 넣어 하룻밤 우려요.","체에 걸러 꿀로 단맛을 맞춰요.","복숭아 껍질을 벗겨 모양내 썰어요.","오미자물에 복숭아와 얼음을 띄워요."]]],
+      ["전어구이","전어","처서 지나 첫 전어가 고소해지기 시작해요.","칼집 내고 굵은 소금 — 뼈째 먹어도 괜찮아요.",["25분","쉬움","전어 6마리, 굵은 소금 2큰술",["비늘만 긁어내고 씻어 물기를 닦아요.","앞뒤로 비스듬히 칼집을 2~3개 넣어요.","굵은 소금을 뿌리고 10분 둬요.","석쇠나 팬에서 중불로 앞뒤 노릇하게 구워요."]]]]},
+ {mood:"가을 바다와 첫 햇과일의 달", c:["#A8742A","#E3B46C"], terms:[["백로",9,7],["추분",9,23]],
+  ing:[["전어","sea","‘집 나간 며느리도 돌아온다’"],["꽃게","sea","살이 꽉 찬 가을 수꽃게"],["대하","sea","9~10월 큰 새우"],["송이버섯","field","추석 무렵 귀한 향"],["고구마","field","햇고구마 출하"],["배","fruit","추석 햇배"],["무화과","fruit","영암 무화과 절정"],["사과","fruit","홍로 출하"]],
+  reg:[["전남 광양 망덕포구","전어","가을 전어 축제가 열리는 섬진강 하구"],["전남 영암","무화과","국내 무화과의 주산지, 9월이 절정"],["강원 양양","송이버섯","소나무 숲에서 나는 향 짙은 송이"],["전남 나주","배","추석 햇배의 대표 산지"]],
+  wk:[["전어회무침","전어","백로 무렵, 전어 기름이 오르기 시작.","뼈째 썰어 미나리·배와 초고추장에 버무리세요.",["30분","보통","손질 전어 6마리, 배 1/4개, 미나리 한 줌, 오이 1/2개, 양파 1/4개, 깻잎 5장, 초고추장 4큰술, 고춧가루 1큰술, 참기름·깨",["전어를 뼈째 얇게 썰어 식초물에 살짝 헹궈 물기를 빼요.","채소와 배를 채 썰어요.","초고추장과 고춧가루로 전어와 채소를 버무려요.","깨와 참기름으로 마무리해요."]]],
+      ["꽃게탕","꽃게","가을엔 살이 꽉 찬 수꽃게.","된장 반 숟갈을 풀면 비린 맛이 잡혀요.",["40분","보통","수꽃게 2마리, 무 200g, 애호박 1/3개, 두부 1/2모, 된장 1/2큰술, 고추장 1큰술, 고춧가루 2큰술, 다진 마늘 1큰술, 국간장 1큰술, 육수 1.2L, 대파·쑥갓",["꽃게를 솔로 씻어 등딱지를 떼고 4등분해요.","육수에 무를 넣고 된장·고추장을 풀어 10분 끓여요.","꽃게·고춧가루·마늘을 넣고 10분 끓여요.","호박·두부를 넣고 국간장으로 간한 뒤 대파·쑥갓을 올려요."]]],
+      ["송이버섯구이","송이버섯","추석 무렵에만 맛보는 향.","씻지 말고 젖은 행주로 닦아 결대로 찢어 살짝만 구우세요.",["10분","쉬움","송이버섯 2~3개, 참기름 1큰술, 굵은 소금 약간",["밑동의 흙 묻은 부분을 연필 깎듯 다듬어요.","젖은 행주로 겉을 살살 닦아요.","결대로 찢거나 도톰하게 썰어요.","기름 없이 달군 팬에 앞뒤 30초씩 굽고 참기름소금에 찍어요."]]],
+      ["무화과 샐러드","무화과","추분 즈음 무화과가 가장 달아요.","생 무화과에 리코타와 꿀 한 줄이면 충분해요.",["10분","쉬움","무화과 4개, 리코타 치즈 100g, 루콜라 한 줌, 꿀 1큰술, 올리브유 1큰술, 견과류 약간, 후추",["무화과를 4등분해요.","접시에 루콜라를 깔고 무화과를 올려요.","리코타를 듬성듬성 떠 올려요.","꿀·올리브유를 두르고 견과와 후추를 뿌려요."]]]]},
+ {mood:"서리 내리기 전, 가장 풍성한 달", c:["#C2562B","#EE9A72"], terms:[["한로",10,8],["상강",10,23]],
+  ing:[["대하","sea","10월이 가장 크고 달아요"],["꽃게","sea","가을 수꽃게 막바지"],["고등어","sea","‘가을 고등어’ 기름이 꽉"],["삼치","sea","가을부터 다시 살이 올라요"],["밤","field","햇밤이 포슬포슬"],["능이버섯","field","‘일능이 이표고 삼송이’"],["늙은호박","field","단맛이 깊어지는 때"],["감","fruit","단감 출하, 홍시는 이제부터"],["사과","fruit","부사 나오기 직전, 아삭한 감홍"]],
+  reg:[["충남 홍성 남당리","대하","가을 대하 축제로 유명한 서해 포구"],["충남 공주","밤","알이 굵고 단 공주 밤, 9월 초~10월 중순 수확"],["경남 김해 진영","단감","국내 단감의 시작으로 꼽히는 고장"],["경북 청도","반시","씨 없는 납작 감, 홍시·감말랭이로"]],
+  wk:[["대하 소금구이","대하","10월 대하는 1년 중 가장 크고 단맛이 진해요.","굵은 소금을 깔고 뚜껑 덮어 굽다 빨개지면 끝. 머리는 버터에 한 번 더.",["20분","쉬움","대하 500g(10~12마리), 굵은 소금 2컵, 버터 1큰술",["수염과 뾰족한 뿔만 가위로 정리하고 씻어 물기를 빼요.","팬에 굵은 소금을 1cm 두께로 깔고 달궈요.","새우를 올리고 뚜껑을 덮어 중불에서 7~8분, 빨갛게 변하면 완성.","떼어 둔 머리는 버터에 바삭하게 구워 함께 내요."]]],
+      ["밤밥","밤","한로(寒露) 무렵, 햇밤으로 지은 밥 한 그릇.","속껍질까지 벗기고 찹쌀을 조금 섞으면 더 고소해요.",["50분","쉬움","쌀 2컵, 찹쌀 1/2컵, 깐 밤 15알, 소금 한 꼬집",["쌀과 찹쌀을 씻어 30분 불려요.","밤은 속껍질까지 벗겨 반으로 잘라요.","밥물은 평소보다 조금 적게 잡고 밤과 소금을 올려요.","밥을 짓고 10분 뜸 들인 뒤 고루 섞어요."]]],
+      ["고등어무조림","고등어","찬 바람 불면 고등어 기름이 꽉 차요.","무를 먼저 10분 졸이고 고등어를 올리세요. 묵은지를 깔아도 좋아요.",["40분","보통","고등어 1마리, 무 300g, 양파 1/2개, 대파 1대, 청양고추 1개, 간장 3큰술, 고춧가루 2큰술, 고추장 1큰술, 설탕 1큰술, 다진 마늘 1큰술, 생강 약간, 물 2컵",["고등어를 토막 내 쌀뜨물에 10분 담가 비린내를 빼요.","무를 두껍게 썰어 냄비에 깔고 물과 양념 절반을 넣어 10분 끓여요.","고등어와 양파를 올리고 남은 양념을 얹어요.","중약불에서 국물을 끼얹으며 15분 졸이고 대파·고추를 올려요."]]],
+      ["능이백숙","능이버섯","상강(霜降) 지나 찬 서리 — 몸을 데우는 보양식.","능이는 데친 물을 버리고 넣어야 쓴맛이 빠져요. 향은 그대로.",["1시간 30분","보통","닭 1마리(1.2kg), 능이버섯 100g(건조 30g), 마늘 10쪽, 대추 5알, 황기·엄나무(선택), 대파 1대, 찹쌀 1컵, 소금",["능이는 끓는 물에 데쳐 첫 물을 버려요. 건조 능이는 불려서 써요.","닭·마늘·대추·약재에 물 2.5L를 붓고 40분 끓여요.","능이를 넣고 20분 더 끓여요.","닭을 건져 먹고, 남은 국물에 불린 찹쌀을 넣어 능이죽으로 마무리해요.","소금은 먹을 때 각자 넣어요."]]]]},
+ {mood:"김장하는 달, 굴이 돌아온다", c:["#8A5A3B","#D4A383"], terms:[["입동",11,7],["소설",11,22]],
+  ing:[["굴","sea","‘R’ 들어가는 달부터 굴"],["방어","sea","대방어 시즌 시작"],["과메기","sea","포항 과메기 출하"],["배추","field","김장 배추가 단단하고 달아요"],["무","field","가을무는 인삼보다 낫다"],["유자","fruit","고흥 유자 수확"],["귤","fruit","노지 귤 출하"]],
+  reg:[["전남 해남","김장 배추","겨울 배추의 대표 산지"],["전남 고흥","유자","향이 진한 남해안 유자, 11월 수확"],["제주 모슬포","방어","방어 축제가 열리는 최남단 항구"],["경남 통영","굴","생굴 출하가 본격적으로 시작돼요"]],
+  wk:[["굴전","굴","입동 첫 주, 다시 돌아온 굴.","밀가루를 얇게 묻히고 달걀물은 한 번만 — 굴맛이 살아요.",["20분","쉬움","굴 300g, 밀가루 1/2컵, 달걀 2개, 쪽파 2줄기, 홍고추 1/2개, 소금 약간, 식용유",["굴을 소금물에 흔들어 씻고 물기를 빼요.","밀가루를 얇게 묻혀요.","달걀물에 다진 쪽파와 고추를 섞어요.","달걀물을 한 번 입혀 중불에서 앞뒤 1분씩 부쳐요."]]],
+      ["수육과 김장 겉절이","배추","김장철, 가장 단 배추로 바로 무쳐서.","수육은 된장·커피 한 스푼 넣고 삶으면 냄새가 없어요.",["1시간 30분","보통","돼지 앞다리살 1kg, 된장 2큰술, 인스턴트커피 1작은술, 대파·양파·마늘·월계수잎; 배추 1/4포기, 고춧가루 4큰술, 액젓 3큰술, 다진 마늘 1큰술, 매실청 1큰술, 쪽파 한 줌",["찬물에 고기와 된장·커피·향채를 넣고 50분~1시간 삶아요.","배추를 먹기 좋게 잘라 소금에 30분 절이고 헹궈요.","양념에 배추와 쪽파를 버무려요.","고기를 10분 식힌 뒤 썰어 겉절이와 함께 내요."]]],
+      ["소고기뭇국","무","가을무는 단맛이 깊어 국이 시원해요.","무를 참기름에 먼저 볶다가 물을 부으세요.",["40분","쉬움","소고기 양지 200g, 무 400g, 참기름 1큰술, 국간장 2큰술, 다진 마늘 1큰술, 대파 1/2대, 물 1.5L, 소금",["무는 나박 썰고 고기는 핏물을 빼요.","참기름에 고기를 볶다가 무를 넣고 투명해질 때까지 볶아요.","물을 붓고 25분 끓이며 거품을 걷어요.","마늘·국간장·소금으로 간하고 대파를 넣어요."]]],
+      ["방어회","방어","소설 즈음부터 방어 기름이 오르기 시작.","김에 묵은지, 밥 조금 올려 싸 먹는 게 제주식이에요.",["20분 (+숙성 2시간)","보통","방어 필렛 400g, 묵은지, 김, 밥 조금, 간장·와사비, 기름장(참기름+소금)",["방어를 키친타월로 감싸 냉장고에서 2~3시간 숙성해요.","결 반대 방향으로 1cm 두께로 썰어요.","김 위에 밥 조금, 방어, 묵은지를 올려 싸요.","뱃살은 기름장, 등살은 간장·와사비가 잘 어울려요."]]]]},
+ {mood:"대방어와 동지팥죽의 달", c:["#7A3E52","#D18FA4"], terms:[["대설",12,7],["동지",12,22]],
+  ing:[["방어","sea","12~1월 대방어 절정"],["꼬막","sea","겨울 꼬막 시작"],["굴","sea","통영 굴 절정"],["과메기","sea","가장 쫀득할 때"],["시금치","field","겨울 섬초"],["팥","field","동지엔 팥"],["귤","fruit","가장 달 때"],["딸기","fruit","겨울 딸기 출하"]],
+  reg:[["경남 통영","굴","1년 중 굴이 가장 맛있는 때"],["제주 모슬포","대방어","10kg 넘는 대방어가 잡혀요"],["전남 보성 벌교","꼬막","겨울 꼬막 시즌 시작"],["제주","노지 감귤","12월 노지 귤의 당도가 가장 높아요"]],
+  wk:[["굴보쌈","굴","대설 첫 주, 통영 굴이 가장 맛있어요.","굴은 무즙에 살살 씻으면 비린 맛 없이 깨끗해져요.",["1시간 30분","보통","돼지고기 수육용 600g, 굴 300g, 무 1/4개, 배추 속잎, 고춧가루 2큰술, 액젓 1큰술, 매실청 1큰술, 다진 마늘 1/2큰술, 쪽파",["돼지고기를 된장·향채와 함께 50분 삶아요.","무를 채 썰어 소금에 10분 절이고 물기를 짜요.","무에 양념을 버무린 뒤 굴을 넣고 살살 섞어요.","배추잎에 수육과 굴무침을 올려 싸 먹어요."]]],
+      ["대방어회","방어","12월, 1년 중 방어가 가장 기름진 때.","뱃살·등살·사잣살 부위별로 썰어 비교해 보세요.",["30분 (+숙성 2시간)","보통","대방어 부위별 600g(뱃살·등살·사잣살), 묵은지, 김, 생와사비, 간장, 기름장, 밥 조금",["부위별로 나눠 키친타월에 싸서 냉장 숙성해요.","뱃살은 두껍게, 등살은 조금 얇게 썰어요.","꼬리 쪽 사잣살도 따로 맛봐요.","김·묵은지·밥과 함께 제주식으로 싸 먹어요."]]],
+      ["동지팥죽","팥","동지(冬至), 1년 중 밤이 가장 긴 날.","팥은 첫 물을 버려야 떫은맛이 빠져요. 새알심은 나이만큼.",["2시간","보통","팥 2컵, 불린 쌀 1/2컵, 찹쌀가루 1컵, 뜨거운 물 약간, 소금, 설탕(선택)",["팥을 씻어 한 번 끓인 뒤 첫 물을 버려요.","물 8컵을 붓고 1시간 무르게 삶아요.","체에 걸러 앙금물을 만들고 불린 쌀을 넣어 끓여요.","찹쌀가루를 뜨거운 물로 익반죽해 새알심을 빚어요.","새알심을 넣고 떠오를 때까지 끓인 뒤 소금으로 간해요."]]],
+      ["꼬막무침","꼬막","연말 상에 올리기 좋은 제철 반찬.","삶은 꼬막은 한쪽 껍데기만 떼서 양념을 올리면 상차림이 살아요.",["30분 (+해감 1시간)","보통","꼬막 1kg, 쪽파 한 줌, 청양고추 1개, 간장 3큰술, 고춧가루 2큰술, 설탕 1큰술, 다진 마늘 1큰술, 참기름·깨",["꼬막을 박박 씻어 소금물에 1시간 해감해요.","한 방향으로 저으며 삶다가 입이 벌어지면 건져요.","한쪽 껍데기를 떼어 내요.","양념장을 섞어 꼬막마다 한 숟갈씩 올려요."]]]]}
+];
+
+// 제철 재료라기보다 절기·세시풍습으로 먹는 메뉴 (월-주차, 0부터)
+const CUSTOM = {"6-1":"초복 풍습","6-3":"복날 풍습","10-1":"김장 풍습","11-2":"동지 풍습"};
+const badge = k => CUSTOM[k] ? `<span class="custom">${CUSTOM[k]}</span>` : "";
+const NOW = new Date();
+const curM = NOW.getMonth();
+const curW = Math.min(3, Math.ceil(NOW.getDate()/7)-1);
+let state = {tab:"today", m:curM, w:curW, open:null, sheet:null, reel:{tpl:"week", tone:0}};
+let favs = [];
+try{ favs = JSON.parse(localStorage.getItem("jc-favs")||"[]"); }catch(e){}
+const saveFavs = ()=>{ try{ localStorage.setItem("jc-favs", JSON.stringify(favs)); }catch(e){} };
+const key = (m,w)=>m+"-"+w;
+const isDark = ()=> document.documentElement.dataset.theme==="dark" ||
+  (document.documentElement.dataset.theme!=="light" && matchMedia("(prefers-color-scheme: dark)").matches);
+
+function applyAccent(m){
+  const r=document.documentElement.style, c=M[m].c[isDark()?1:0];
+  r.setProperty("--acc", c);
+  r.setProperty("--acc-soft", `color-mix(in srgb, ${c} ${isDark()?18:14}%, var(--surface))`);
+}
+const ICON = {
+  heart:'<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
+  book:'<svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5M8 7h7"/></svg>',
+  reel:'<svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10.5 9.5v5l4-2.5z"/></svg>',
+  back:'<svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  dl:'<svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>'
+};
+
+function nextTerm(){
+  const y=NOW.getFullYear(), today=new Date(y,NOW.getMonth(),NOW.getDate());
+  for(let i=0;i<24;i++){
+    const off=curM+Math.floor(i/2), mm=off%12, t=M[mm].terms[i%2];
+    const d=new Date(y+(off>11?1:0), t[1]-1, t[2]);
+    if(d>=today) return {n:t[0], dd:Math.round((d-today)/864e5)};
+  }
+}
+function termsHtml(m){
+  const next=nextTerm();
+  return '<div class="terms">'+M[m].terms.map(t=>{
+    let cls="", dday="";
+    if(m===curM && t[2]<NOW.getDate()) cls="passed";
+    if(next.n===t[0]){ cls="next"; dday= next.dd===0?"오늘":"D-"+next.dd; }
+    return `<div class="term ${cls}"><span class="n" ${dday?`data-dday="${dday}"`:""}>${t[0]}</span><span class="d">${t[1]}월 ${t[2]}일경</span></div>`;
+  }).join("")+ (m===curM && !M[m].terms.some(t=>t[0]===next.n)
+     ? `<div class="term next"><span class="n" data-dday="D-${next.dd}">${next.n}</span><span class="d">다음 절기</span></div>`:"")
+  +'</div>';
+}
+
+function viewToday(){
+  const d=M[state.m], w=d.wk[state.w], isCur=state.m===curM, k=key(state.m,state.w), fav=favs.includes(k);
+  const label = isCur && state.w===curW ? "이번 주엔 이걸 드셔보세요" : `${state.m+1}월 ${state.w+1}주차 추천`;
+  const groups = Object.keys(CAT).map(c=>{
+    const items=d.ing.filter(i=>i[1]===c); if(!items.length) return "";
+    const openItem = items.find(i=>i[0]===state.open);
+    return `<div><div class="cat-name"><span class="dot" style="background:var(${CAT[c][1]})"></span>${CAT[c][0]}</div>
+      <div class="chips">${items.map(i=>`<button class="chip" data-ing="${i[0]}" aria-expanded="${state.open===i[0]}">${i[0]}</button>`).join("")}</div>
+      ${openItem?`<div class="note"><b>${openItem[0]}</b> — ${openItem[2]}</div>`:""}</div>`;
+  }).join("");
+  return `
+  <header class="top"><span class="brand">제철<b>한입</b></span><span class="today">${NOW.getMonth()+1}월 ${NOW.getDate()}일 ${"일월화수목금토"[NOW.getDay()]}요일</span></header>
+  <div class="month-head">
+    <div class="month-num">${state.m+1}<small>월</small></div>
+    <div class="month-mood">${d.mood}</div>
+    ${isCur?"":`<button class="back" data-go="cur">← 이번 달로 돌아가기</button>`}
+  </div>
+  ${termsHtml(state.m)}
+  <article class="pick">
+    <button class="heart" data-fav="${k}" aria-pressed="${fav}" aria-label="${fav?"찜 해제":"찜하기"}">${ICON.heart}</button>
+    <div class="eyebrow">${label}</div>
+    <h2>${w[0]}</h2>
+    <div class="meta">${CUSTOM[k]?`<span class="custom" style="margin-left:0">${CUSTOM[k]}</span>`:""}<span>제철 재료 · ${w[1]}</span><span>${w[4][0]}</span><span>${w[4][1]}</span></div>
+    <p>${w[2]}</p>
+    <div class="tip"><strong>맛있게 먹는 법</strong>${w[3]}</div>
+    <div class="actions">
+      <button class="btn primary" data-open="recipe">${ICON.book}레시피 보기</button>
+      <button class="btn ghost" data-open="reel">${ICON.reel}릴스 카드</button>
+    </div>
+  </article>
+  ${installHint()}
+  <section>
+    <div class="sec-h"><h3>${state.m+1}월의 한 주 한 메뉴</h3><span>눌러서 보기</span></div>
+    <div class="weeks">${d.wk.map((x,i)=>`<button class="wk ${i===state.w?"sel":""}" data-w="${i}">
+      <span class="w">${i+1}주차</span><span class="t">${x[0]}${badge(key(state.m,i))}<span class="s">${x[1]} · ${x[4][0]}</span></span>
+      ${isCur&&i===curW?'<span class="now">이번 주</span>':'<span></span>'}</button>`).join("")}</div>
+  </section>
+  <section>
+    <div class="sec-h"><h3>${state.m+1}월 제철 재료</h3><span>${d.ing.length}가지</span></div>
+    <div class="cats">${groups}</div>
+  </section>
+  <section>
+    <div class="sec-h"><h3>이달의 지역 특산물</h3><span>산지에서 가장 맛있을 때</span></div>
+    <div class="regions">${d.reg.map(r=>`<div class="rg"><span class="where">${r[0]}</span><span class="what">${r[1]}<span class="why">${r[2]}</span></span></div>`).join("")}</div>
+  </section>`;
+}
+
+function viewCal(){
+  return `<header class="top"><span class="brand">제철<b>한입</b></span><span class="today">열두 달 제철 달력</span></header>
+  <h2 style="margin-top:22px;font-size:26px;font-weight:800">어느 달이 궁금하세요?</h2>
+  <div class="cal">${M.map((d,i)=>`<button class="mcell ${i===curM?"cur":""}" data-m="${i}">
+    <span class="bar" style="background:${d.c[isDark()?1:0]}"></span>
+    <span class="mn">${i+1}월</span>
+    <span class="mi">${d.ing.slice(0,4).map(x=>x[0]).join(" · ")}</span></button>`).join("")}</div>`;
+}
+
+function viewFav(){
+  const list = favs.map(k=>{const [m,w]=k.split("-").map(Number); return {k,m,w,x:M[m].wk[w]};});
+  return `<header class="top"><span class="brand">제철<b>한입</b></span><span class="today">찜한 음식 ${list.length}</span></header>
+  <h2 style="margin-top:22px;font-size:26px;font-weight:800">먹어볼 목록</h2>
+  ${list.length? `<div style="margin-top:12px">${list.map(f=>`<div class="fav">
+     <div><div class="t">${f.x[0]}${badge(f.k)}</div><div class="s">${f.m+1}월 ${f.w+1}주차 · ${f.x[1]} · ${f.x[4][0]}</div></div>
+     <button data-recipe="${f.k}">레시피</button><button data-unfav="${f.k}">빼기</button></div>`).join("")}</div>`
+   : `<div class="empty">추천 카드의 하트를 누르면<br>여기에 모아 둘 수 있어요.</div>`}`;
+}
+
+/* ---------- 레시피 화면 ---------- */
+function viewRecipe(){
+  const w=M[state.m].wk[state.w], r=w[4];
+  const ings=r[2].split(/,\s*|;\s*/);
+  return `<div class="sheet-in">
+    <div class="sheet-bar"><button data-close>${ICON.back}돌아가기</button><span class="ttl">${state.m+1}월 ${state.w+1}주차</span></div>
+    <div class="rc-head"><div class="eyebrow">${CUSTOM[key(state.m,state.w)]?CUSTOM[key(state.m,state.w)]+" · ":""}제철 재료 · ${w[1]}</div><h2>${w[0]}</h2></div>
+    <div class="facts">
+      <div class="fact"><span class="k">시간</span><span class="v">${r[0]}</span></div>
+      <div class="fact"><span class="k">난이도</span><span class="v">${r[1]}</span></div>
+      <div class="fact"><span class="k">분량</span><span class="v">2인분</span></div>
+    </div>
+    <section><div class="sec-h"><h3>재료</h3><span>${ings.length}가지</span></div>
+      <ul class="ingl">${ings.map(i=>`<li>${i}</li>`).join("")}</ul></section>
+    <section><div class="sec-h"><h3>만드는 법</h3></div>
+      <ol class="steps">${r[3].map(s=>`<li><span>${s}</span></li>`).join("")}</ol></section>
+    <div class="rc-tip"><b>제철 포인트</b> — ${w[2]} ${w[3]}</div>
+    <div class="actions" style="margin-top:18px">
+      <button class="btn ghost" data-fav="${key(state.m,state.w)}" aria-pressed="${favs.includes(key(state.m,state.w))}">${ICON.heart}${favs.includes(key(state.m,state.w))?"찜 해제":"찜하기"}</button>
+      <button class="btn primary" data-open="reel">${ICON.reel}릴스 카드 만들기</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- 릴스 카드 ---------- */
+const TPL = [["week","이번 주 한 메뉴"],["month","4주 메뉴"],["ing","제철 재료"]];
+function tones(m){ const c=M[m].c[0]; return [
+  {bg:mix(c,"#FFFFFF",.86), ink:"#1D2420", acc:c, sub:"#5F6A62", card:"#FFFFFF"},
+  {bg:c, ink:"#FFFFFF", acc:"#FFFFFF", sub:"rgba(255,255,255,.78)", card:"rgba(255,255,255,.14)"},
+  {bg:"#171B18", ink:"#F1F2EC", acc:M[m].c[1], sub:"#A3ADA4", card:"#232924"}]; }
+function mix(a,b,t){ const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)); const A=p(a),B=p(b);
+  return "#"+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,"0")).join(""); }
+
+function viewReel(){
+  return `<div class="sheet-in">
+    <div class="sheet-bar"><button data-close>${ICON.back}돌아가기</button><span class="ttl">릴스 카드 · 1080×1920</span></div>
+    <div class="seg" role="group" aria-label="카드 종류">${TPL.map(t=>`<button data-tpl="${t[0]}" aria-pressed="${state.reel.tpl===t[0]}">${t[1]}</button>`).join("")}</div>
+    <div class="reel-wrap"><img id="reelImg" alt="릴스 카드 미리보기"></div>
+    <div class="swatches" role="group" aria-label="색 조합">${tones(state.m).map((t,i)=>`<button class="sw" data-tone="${i}" aria-pressed="${state.reel.tone===i}" aria-label="색 조합 ${i+1}" style="background:${t.bg}"></button>`).join("")}</div>
+    <div class="actions"><button class="btn primary" id="saveReel" style="grid-column:1/-1">${ICON.dl}저장 · 공유하기</button></div>
+    <p class="reel-note" id="reelNote">휴대폰에서는 공유 창이 열려요 — ‘이미지 저장’이나 인스타그램을 고르세요.</p>
+    <div class="caption"><div class="k"><span>캡션 · 해시태그</span><button data-copy>복사</button></div><pre id="cap">${captionText()}</pre></div>
+  </div>`;
+}
+function captionText(){
+  const d=M[state.m], w=d.wk[state.w], tag=s=>"#"+s.replace(/[\s·]/g,"");
+  if(state.reel.tpl==="month") return `${state.m+1}월엔 이렇게 드셔보세요 🍽\n${d.wk.map((x,i)=>`${i+1}주차 ${x[0]}`).join("\n")}\n\n${["제철음식",state.m+1+"월제철음식",...d.wk.map(x=>x[1]),"제철한입"].map(tag).join(" ")}`;
+  if(state.reel.tpl==="ing") return `${state.m+1}월 제철 재료, 지금이 제일 맛있어요\n${d.ing.map(i=>i[0]).join(" · ")}\n\n${["제철음식",state.m+1+"월제철",...d.ing.slice(0,5).map(i=>i[0]),"제철한입"].map(tag).join(" ")}`;
+  return `이번 주엔 ${w[0]} 어떠세요?\n${w[2]}\n\n💡 ${w[3]}\n\n${["제철음식",state.m+1+"월제철음식",w[0],w[1],"제철레시피","제철한입"].map(tag).join(" ")}`;
+}
+
+function wrap(ctx,text,maxW){
+  const words=text.split(" "), lines=[]; let line="";
+  for(const wd of words){
+    const test=line?line+" "+wd:wd;
+    if(ctx.measureText(test).width<=maxW){ line=test; continue; }
+    if(line) lines.push(line);
+    if(ctx.measureText(wd).width>maxW){ let part=""; for(const ch of wd){ if(ctx.measureText(part+ch).width>maxW){lines.push(part);part=ch;} else part+=ch; } line=part; }
+    else line=wd;
+  }
+  if(line) lines.push(line); return lines;
+}
+const F = (w,s,fam)=>`${w} ${s}px ${fam==="d"?'"Hahmlet", serif':'"IBM Plex Sans KR", sans-serif'}`;
+
+async function drawReel(){
+  const d=M[state.m], w=d.wk[state.w];
+  // 한글 웹폰트는 글자 범위별로 나눠 받으므로, 카드에 들어갈 글자를 모두 미리 받아 둔다
+  const txt="제철한입월주차추천이번엔걸드셔보세요맛있게먹는법재료바다밭산과일지금가장한에메뉴0123456789·|. "+JSON.stringify(d);
+  await Promise.all([[800,"d"],[700,"d"],[500,"d"],[500,"b"],[600,"b"],[700,"b"],[800,"b"]].map(([wt,f])=>document.fonts.load(F(wt,40,f),txt))).catch(()=>{});
+  const W=1080,H=1920, cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+  const x=cv.getContext("2d"), t=tones(state.m)[state.reel.tone], P=96;
+  x.fillStyle=t.bg; x.fillRect(0,0,W,H);
+  // 큰 원 장식
+  x.globalAlpha=state.reel.tone===1?.12:.10; x.fillStyle=state.reel.tone===1?"#FFFFFF":t.acc;
+  x.beginPath(); x.arc(W-60,300,380,0,Math.PI*2); x.fill(); x.globalAlpha=1;
+  // 상단: 브랜드 + 절기
+  x.textBaseline="alphabetic"; x.fillStyle=t.ink; x.font=F(800,40,"d"); x.fillText("제철한입",P,170);
+  x.fillStyle=t.sub; x.font=F(500,32,"b"); x.textAlign="right";
+  x.fillText(d.terms.map(z=>`${z[0]} ${z[1]}.${z[2]}`).join("  ·  "),W-P,168); x.textAlign="left";
+  // 월 숫자
+  x.fillStyle=t.acc; x.font=F(800,300,"d"); x.fillText(String(state.m+1),P-10,520);
+  const mw=x.measureText(String(state.m+1)).width; x.font=F(800,96,"d"); x.fillText("월",P+mw,520);
+  x.fillStyle=t.ink; x.font=F(500,44,"d"); wrap(x,d.mood,W-2*P).forEach((l,i)=>x.fillText(l,P,610+i*60));
+  let y=780;
+  if(state.reel.tpl==="week"){
+    x.fillStyle=t.acc; x.font=F(600,38,"b"); x.fillText(state.m===curM&&state.w===curW?"이번 주엔 이걸 드셔보세요":`${state.w+1}주차 추천`,P,y);
+    y+=40; x.fillStyle=t.ink; x.font=F(800,132,"d");
+    wrap(x,w[0],W-2*P).forEach(l=>{y+=150; x.fillText(l,P,y);});
+    y+=96; x.fillStyle=t.sub; x.font=F(500,36,"b"); x.fillText(`${CUSTOM[key(state.m,state.w)]?CUSTOM[key(state.m,state.w)]+"   |   ":""}제철 재료 · ${w[1]}   |   ${w[4][0]}`,P,y);
+    y+=90; x.fillStyle=t.ink; x.font=F(500,46,"b"); wrap(x,w[2],W-2*P).forEach(l=>{x.fillText(l,P,y); y+=70;});
+    // 팁 박스
+    x.font=F(500,38,"b"); const tl=wrap(x,w[3],W-2*P-96); const bh=110+tl.length*58; y+=40;
+    x.fillStyle=t.card; rr(x,P,y,W-2*P,bh,36); x.fill();
+    x.fillStyle=t.acc; x.font=F(600,32,"b"); x.fillText("맛있게 먹는 법",P+48,y+70);
+    x.fillStyle=t.ink; x.font=F(500,38,"b"); tl.forEach((l,i)=>x.fillText(l,P+48,y+130+i*58));
+  } else if(state.reel.tpl==="month"){
+    x.fillStyle=t.acc; x.font=F(600,38,"b"); x.fillText(`${state.m+1}월엔 한 주에 한 메뉴`,P,y); y+=50;
+    d.wk.forEach((it,i)=>{
+      const h=200; x.fillStyle=t.card; rr(x,P,y,W-2*P,h,36); x.fill();
+      x.fillStyle=t.acc; x.font=F(800,34,"b"); x.fillText(`${i+1}주차`,P+48,y+68);
+      x.fillStyle=t.ink; x.font=F(800,72,"d"); x.fillText(it[0],P+48,y+150);
+      x.fillStyle=t.sub; x.font=F(500,32,"b"); x.textAlign="right"; x.fillText(it[1],W-P-48,y+68); x.textAlign="left";
+      y+=h+22;
+    });
+  } else {
+    x.fillStyle=t.acc; x.font=F(600,38,"b"); x.fillText(`${state.m+1}월, 지금 가장 맛있는 재료`,P,y); y+=40;
+    Object.keys(CAT).forEach(c=>{
+      const items=d.ing.filter(i=>i[1]===c); if(!items.length) return;
+      y+=80; x.fillStyle=t.sub; x.font=F(600,34,"b"); x.fillText(CAT[c][0],P,y); y+=30;
+      let cx=P; x.font=F(700,52,"d");
+      items.forEach(it=>{
+        const tw=x.measureText(it[0]).width+72;
+        if(cx+tw>W-P){cx=P; y+=104;}
+        x.fillStyle=t.card; rr(x,cx,y,tw,88,44); x.fill();
+        x.fillStyle=t.ink; x.fillText(it[0],cx+36,y+62); cx+=tw+18;
+      }); y+=88;
+    });
+  }
+  // 하단
+  x.fillStyle=t.sub; x.font=F(500,30,"b"); x.fillText("매주 제철 한 입 — 저장해 두고 장 볼 때 꺼내 보세요",P,H-96);
+  return cv;
+}
+function rr(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath();}
+
+let reelCanvas=null;
+async function refreshReel(){
+  reelCanvas = await drawReel();
+  const img=document.getElementById("reelImg"); if(img) img.src=reelCanvas.toDataURL("image/png");
+  const cap=document.getElementById("cap"); if(cap) cap.textContent=captionText();
+}
+
+
+function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.h); toast.h=setTimeout(()=>t.hidden=true,2200); }
+
+/* ---------- 홈 화면에 설치 ---------- */
+let deferredPrompt=null, hideInstall=false;
+try{ hideInstall = localStorage.getItem("jc-hide-install")==="1"; }catch(e){}
+const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+addEventListener("beforeinstallprompt", e=>{ e.preventDefault(); deferredPrompt=e; render(); });
+function installHint(){
+  if(standalone || hideInstall) return "";
+  if(deferredPrompt) return `<div class="install"><span><b>앱으로 설치</b>하면 홈 화면에서 바로 열 수 있어요.</span><span><button class="btn primary" data-install style="padding:7px 12px">설치</button> <button data-hideinstall>닫기</button></span></div>`;
+  if(isIOS) return `<div class="install"><span>Safari 아래 <b>공유 버튼</b> → <b>‘홈 화면에 추가’</b>를 누르면 앱처럼 쓸 수 있어요.</span><button data-hideinstall>닫기</button></div>`;
+  return "";
+}
+
+/* ---------- 렌더 ---------- */
+function render(){
+  applyAccent(state.tab==="today"||state.sheet?state.m:curM);
+  document.getElementById("app").innerHTML = state.tab==="today"?viewToday():state.tab==="cal"?viewCal():viewFav();
+  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected", t.dataset.tab===state.tab));
+  const sh=document.getElementById("sheet");
+  if(state.sheet){ sh.innerHTML = state.sheet==="recipe"?viewRecipe():viewReel(); sh.hidden=false; document.body.classList.add("locked"); if(state.sheet==="reel") refreshReel(); }
+  else { sh.hidden=true; sh.innerHTML=""; document.body.classList.remove("locked"); }
+}
+
+document.addEventListener("click", async e=>{
+  const t=e.target.closest("button"); if(!t) return;
+  const ds=t.dataset;
+  if(ds.tab){ state.tab=ds.tab; window.scrollTo(0,0); }
+  else if(ds.w){ state.w=+ds.w; document.querySelector(".pick")?.scrollIntoView({behavior:"smooth",block:"center"}); }
+  else if(ds.ing){ state.open = state.open===ds.ing?null:ds.ing; }
+  else if(ds.m){ state.m=+ds.m; state.w= state.m===curM?curW:0; state.open=null; state.tab="today"; window.scrollTo(0,0); }
+  else if(ds.go){ state.m=curM; state.w=curW; state.open=null; }
+  else if(ds.fav){ const k=ds.fav; favs = favs.includes(k)?favs.filter(x=>x!==k):[...favs,k]; saveFavs(); }
+  else if(ds.unfav){ favs=favs.filter(x=>x!==ds.unfav); saveFavs(); }
+  else if(ds.recipe){ [state.m,state.w]=ds.recipe.split("-").map(Number); state.sheet="recipe"; }
+  else if(ds.open){ state.sheet=ds.open; document.getElementById("sheet").scrollTop=0; }
+  else if("close" in ds){ state.sheet=null; }
+  else if("install" in ds){ if(deferredPrompt){ deferredPrompt.prompt(); await deferredPrompt.userChoice; deferredPrompt=null; } }
+  else if("hideinstall" in ds){ hideInstall=true; try{ localStorage.setItem("jc-hide-install","1"); }catch(e){} }
+  else if(ds.tpl){ state.reel.tpl=ds.tpl; document.querySelectorAll("[data-tpl]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tpl===ds.tpl)); refreshReel(); return; }
+  else if(ds.tone){ state.reel.tone=+ds.tone; document.querySelectorAll("[data-tone]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.tone===ds.tone)); refreshReel(); return; }
+  else if("copy" in ds){
+    const txt=captionText();
+    try{ await navigator.clipboard.writeText(txt); toast("캡션을 복사했어요"); }
+    catch(err){ const r=document.createRange(); r.selectNodeContents(document.getElementById("cap")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("선택됐어요 — 복사해 주세요"); }
+    return;
+  }
+  else if(t.id==="saveReel"){
+    if(!reelCanvas) await refreshReel();
+    const name=`제철한입_${state.m+1}월_${state.reel.tpl==="week"?M[state.m].wk[state.w][0]:state.reel.tpl==="month"?"4주메뉴":"제철재료"}.png`.replace(/\s/g,"");
+    const blob=await new Promise(r=>reelCanvas.toBlob(r,"image/png"));
+    const file=new File([blob],name,{type:"image/png"});
+    // 휴대폰: 공유 시트(사진에 저장·인스타그램·카톡)로, PC: 파일 다운로드
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], text:captionText()}); }
+      catch(err){ if(err.name!=="AbortError") document.getElementById("reelNote").textContent="공유하지 못했어요. 미리보기 이미지를 길게 눌러 저장하세요."; }
+    } else {
+      const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),4000); toast("이미지를 저장했어요");
+    }
+    return;
+  }
+  else return;
+  render();
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", render);
+new MutationObserver(render).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+render();
+if("serviceWorker" in navigator) addEventListener("load", ()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>
